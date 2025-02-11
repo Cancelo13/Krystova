@@ -1,9 +1,11 @@
-from unittest import case
 import os
-from xml.etree.ElementTree import ParseError
-
+from googletrans import Translator
 from PyPDF2 import *
 import time as t
+from reportlab.pdfgen import canvas
+from PIL import Image
+
+
 
 def upload():
     try:
@@ -120,6 +122,70 @@ def split_pdf():
     file_path = os.path.join(file_path, "Output.pdf")
     writer.write(file_path)
 
+def save_text_to_pdf(text, output_path):
+    c = canvas.Canvas(output_path)
+    c.drawString(50, 800, "Translated Text:")
+    text_lines = text.split("\n")
+    y = 780
+    for line in text_lines:
+        c.drawString(50, y, line)
+        y -= 20
+        if y < 20:  # Start a new page if out of space
+            c.showPage()
+            y = 800
+    c.save()
+
+def translate_pdf():
+    while True:
+        file = upload()
+        if file:
+            break
+    reader = PdfReader(file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text() + '\n'
+    translator = Translator()
+
+def images_to_pdf():
+    while True:
+        try:
+            print("=================================================")
+            no_files = int(input("Enter the number of Images to Convert: "))
+            if no_files > 0:
+                break
+            else:
+                print("Error, Please enter a number greater than 0")
+        except Exception as e:
+            print(f"{e}, Please enter a number!")
+    print("=================================================")
+    counter = 0
+    image_paths = list()
+    while True:
+        path = input("Enter the path of the image: ")
+        if path:
+            counter += 1
+            image_paths.append(path)
+
+        if counter == no_files:
+            print("All files has been loaded successfully")
+            break
+    print("=================================================")
+    desktop_path = [
+        os.path.join(os.path.expanduser("~"), "Desktop"),
+        os.path.join(os.path.expanduser("~"), "OneDrive", "Desktop")
+    ]
+
+    file_path = next((path for path in desktop_path if os.path.exists(path)), None)
+    if file_path is None:
+        raise FileNotFoundError("Desktop is not found, Please Contact the developer")
+    file_path = os.path.join(file_path, "Output.pdf")
+    images = [Image.open(img).convert("RGB") for img in image_paths]
+    images[0].save(file_path, save_all=True, append_images=images[1:])
+    print("All files has been converted successfully")
+    print("=================================================")
+
+
+
 def run():
     is_running = True
     while is_running:
@@ -130,9 +196,10 @@ def run():
             case '2':
                 split_pdf()
             case '3':
-                pass
+                print("Sorry this Option is under maintenance!")
+                t.sleep(1)
             case '4':
-                pass
+                images_to_pdf()
             case '5':
                 is_running = False
             case _:
